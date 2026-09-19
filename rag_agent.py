@@ -47,9 +47,18 @@ Produce structured test cases in JSON array format where each test case contains
     return prompt
 
 
-def build_script_prompt(html_content: str, selected_test_case: dict, context_chunks: List[str]) -> str:
+def build_script_prompt(
+    html_content: str,
+    selected_test_case: dict,
+    context_chunks: List[str],
+    target_url: str
+) -> str:
     joined = '\n\n---\n\n'.join(context_chunks)
+
     prompt = f"""You are a Selenium (Python) expert. Use only the provided HTML and context to generate a runnable Selenium Python script that implements this test case.
+
+Target page:
+{target_url}
 
 HTML:
 {html_content}
@@ -61,9 +70,14 @@ Test case JSON:
 {json.dumps(selected_test_case, indent=2)}
 
 Requirements:
-- Use webdriver.Chrome() and selenium best practices (explicit waits)
-- Use selectors that exist in the HTML (ID, name, or CSS selectors)
+- Use webdriver.Chrome() and Selenium best practices such as explicit waits
+- Use selectors that actually exist in the provided HTML
+- The script must open this exact target using:
+  driver.get("{target_url}")
+- Do not use placeholder paths such as file:///path/to/file.html
 - The script should be runnable as 'python script.py'
+- Include assertions that verify the expected result of the test case
+- Always close the browser using driver.quit()
 
-Return only the Python script (no explanation)."""
+Return only the Python script with no explanation."""
     return prompt

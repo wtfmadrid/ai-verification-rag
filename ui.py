@@ -99,45 +99,79 @@ if st.button("Generate Test Cases", type="primary"):
 
 if st.session_state.test_cases:
     st.header("📋 Generated Test Cases")
-    
+
+    st.subheader("🎯 Target Application")
+
+    target_input = st.text_input(
+        "Enter target page URL or local HTML file path:",
+        key="selenium_target",
+        placeholder="https://example.com/checkout or D:/path/to/checkout.html"
+    )
+
     for idx, tc in enumerate(st.session_state.test_cases):
-        with st.expander(f"**Test Case {idx + 1}: {tc.get('Test_Scenario', 'N/A')}**", expanded=False):
+        with st.expander(
+            f"**Test Case {idx + 1}: {tc.get('Test_Scenario', 'N/A')}**",
+            expanded=False
+        ):
             st.json(tc)
-            
+
             st.subheader("Generate Selenium Script")
-            
-            html_input = st.text_input(
-                "Enter target page URL or local HTML file path:",
-                key=f"html_input_{idx}",
-                placeholder="https://example.com/checkout or path/to/file.html"
-            )
-            
-            if st.button(f"🔧 Generate Selenium Script", key=f"gen_script_{idx}"):
-                if not html_input:
-                    st.warning("Please enter a URL or file path")
+
+            if st.button("🔧 Generate Selenium Script", key=f"gen_script_{idx}"):
+                if not target_input:
+                    st.warning("Please enter a target URL or HTML file path above")
                 else:
+                    clean_target = target_input.strip().strip('"').strip("'")
+
                     try:
                         with st.spinner("Fetching HTML content..."):
-                            if html_input.startswith('http'):
-                                html_content = requests.get(html_input, timeout=10).text
+
+                            if clean_target.startswith(('http://', 'https://')):
+                                response = requests.get(clean_target, timeout=10)
+                                response.raise_for_status()
+
+                                html_content = response.text
+                                selenium_target = clean_target
+
                             else:
-                                html_content = Path(html_input).read_text(encoding='utf-8')
-                        
+                                target_path = Path(clean_target).expanduser().resolve()
+
+                                html_content = target_path.read_text(
+                                    encoding='utf-8'
+                                )
+
+                                selenium_target = target_path.as_uri()
+
                         with st.spinner("Generating Selenium script..."):
-                            script_prompt = build_script_prompt(html_content, tc, st.session_state.context_chunks)
-                            script = generate_with_llm("You are a Selenium automation expert.", script_prompt, 2048)
-                            
+
+                            script_prompt = build_script_prompt(
+                                html_content,
+                                tc,
+                                st.session_state.context_chunks,
+                                selenium_target
+                            )
+
+                            script = generate_with_llm(
+                                "You are a Selenium automation expert.",
+                                script_prompt,
+                                2048
+                            )
+
                             script_clean = script.strip()
+
                             if script_clean.startswith('```python'):
                                 script_clean = script_clean[9:]
+
                             if script_clean.startswith('```'):
                                 script_clean = script_clean[3:]
+
                             if script_clean.endswith('```'):
                                 script_clean = script_clean[:-3]
+
                             script_clean = script_clean.strip()
-                            
+
                             st.code(script_clean, language='python')
-                            
+
                             st.download_button(
                                 "⬇️ Download Script",
                                 script_clean,
@@ -145,14 +179,17 @@ if st.session_state.test_cases:
                                 mime="text/x-python",
                                 key=f"download_{idx}"
                             )
-                            
+
                             st.success("✅ Script generated successfully!")
+
                     except requests.exceptions.RequestException as e:
                         st.error(f"Error fetching URL: {e}")
+
                     except FileNotFoundError:
-                        st.error(f"File not found: {html_input}")
+                        st.error(f"File not found: {clean_target}")
+
                     except Exception as e:
                         st.error(f"Error: {e}")
-
+                        
 st.sidebar.markdown("---")
 st.sidebar.info("📌 Upload documents → Generate test cases → Generate Selenium scripts")
