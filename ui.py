@@ -197,7 +197,8 @@ if st.button(
             response = generate_with_llm(
                 "You are a QA test case generator.",
                 prompt,
-                max_tokens
+                max_tokens,
+                json_mode=True
             )
 
 
@@ -243,29 +244,25 @@ if st.button(
                 response_clean.strip()
             )
 
-            test_cases = json.loads(
-                response_clean
-            )
+            parsed_response = json.loads(response_clean)
 
-            if isinstance(
-                test_cases,
-                list
+            if isinstance(parsed_response, list):
+                test_cases = parsed_response
+            elif (
+                isinstance(parsed_response, dict)
+                and "test_cases" in parsed_response
+                and isinstance(parsed_response["test_cases"], list)
             ):
-
-                st.session_state.test_cases = (
-                    test_cases
-                )
-
+                test_cases = parsed_response["test_cases"]
             else:
+            # Treat a single valid test-case object
+            # as one test case
+                test_cases = [parsed_response]
 
-                st.session_state.test_cases = [
-                    test_cases
-                ]
+            st.session_state.test_cases = test_cases
 
-
-            # Clear scripts from an older generation run
+            # Clear scripts generated for previous test cases
             st.session_state.generated_scripts = {}
-
 
             st.success(
                 f"✅ Generated "
