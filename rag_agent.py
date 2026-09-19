@@ -124,7 +124,7 @@ Required format:
     "Test_Scenario": "...",
     "Steps": ["...", "..."],
     "Expected_Result": "...",
-    "Grounded_In": "..."
+    "Grounded_In": "checkout_requirements.md - REQ-008"
   }}
 ]"""
     return prompt
@@ -179,6 +179,30 @@ STRICT AUTOMATION GROUNDING RULES:
 - If a selected test case requires behavior that is not supported
   by the available application evidence, do not fabricate elements
   or expected behavior.
+
+TEST CASE GROUNDING RULES:
+
+- Each test case should verify one clear requirement or one closely related group of requirements.
+
+- Every step must be necessary to test the requirement listed in Grounded_In.
+
+- Do not add unrelated setup actions from other requirements unless they are required for the test scenario.
+
+- Expected_Result must be directly supported by the requirement(s) listed in Grounded_In.
+
+- Do not infer additional expected behavior that is not explicitly stated in the cited requirement.
+
+- If a test is grounded only in REQ-004, do not include behavior from unrelated requirements such as customer validation, payment processing, or shipping.
+
+- Prefer the minimum number of steps necessary to verify the requirement.
+
+GROUNDING:
+
+- Every test case must identify where its expected behavior came from.
+- Grounded_In must include the source filename from the retrieved context.
+- If a requirement ID such as REQ-008 is explicitly visible in the retrieved context, include it as well.
+- Never invent a requirement ID that is not present in the retrieved context.
+- If no requirement ID is visible, cite only the source filename.
 
 Return only the Python script with no explanation."""
     return prompt
