@@ -3,3 +3,4 @@
 _pycache__/
 .devcontainer/
 generated_tests/
+chroma_db/
