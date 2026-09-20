@@ -1,3 +1,0 @@
-Form validation: inline error messages must be shown in red text with a short explanation.
-The "Pay Now" button must be green and prominent.
-Discount messages: success messages should be green; errors in red.
