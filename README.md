@@ -6,9 +6,40 @@ The project combines Retrieval-Augmented Generation (RAG), local LLM inference, 
 
 ---
 
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Key Features](#key-features)
+  - [RAG-Based Test Generation](#rag-based-test-generation)
+  - [Source-Aware Grounding](#source-aware-grounding)
+  - [Local LLM Inference](#local-llm-inference)
+  - [Structured Test Cases](#structured-test-cases)
+  - [Reusable Target Application Path](#reusable-target-application-path)
+  - [Selenium Script Generation](#selenium-script-generation)
+  - [Automated Selenium Execution](#automated-selenium-execution)
+- [Why Local Ollama Instead of Hosted LLM APIs?](#why-local-ollama-instead-of-hosted-llm-apis)
+- [Test Result Classification](#test-result-classification)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [UI Preview](#ui-preview)
+- [Setup](#setup)
+- [Usage](#usage)
+- [Engineering Enhancements](#engineering-enhancements)
+- [Limitations](#limitations)
+- [Future Improvements](#future-improvements)
+- [Learning Outcomes](#learning-outcomes)
+- [License & Acknowledgements](#license--acknowledgements)
+- [Author](#author)
+
+---
+
+
 ## Project Overview
 
 Traditional test creation often requires engineers to manually read requirements, identify test scenarios, write automation scripts, and then execute those scripts separately.
+
+Link for Project Demo: https://drive.google.com/file/d/1v4GORwi0kskJRbNfgvserJLqUYIwqmlF/view?usp=sharing 
 
 This project brings those steps into one workflow:
 
@@ -91,6 +122,83 @@ The model is used for:
 - Selenium script generation.
 
 This avoids requiring a hosted LLM for the primary workflow and allows the project to run using local inference on consumer hardware.
+
+---
+
+## Why Local Ollama Instead of Hosted LLM APIs?
+
+The project uses **Ollama with Qwen2.5-Coder 7B Instruct** as the primary generation layer instead of relying exclusively on hosted services such as OpenAI or Gemini.
+
+This was a deliberate engineering choice rather than simply a model swap.
+
+### Local-first inference
+
+With Ollama, the model runs on the local machine instead of sending every prompt to a remote inference provider. This makes the generation pipeline easier to experiment with locally and removes a hard dependency on an external API for the main workflow.
+
+```text
+Hosted API
+
+Application
+    ↓
+Internet request
+    ↓
+External model provider
+    ↓
+Generated response
+
+
+Local Ollama
+
+Application
+    ↓
+localhost
+    ↓
+Ollama
+    ↓
+Qwen2.5-Coder 7B Instruct
+    ↓
+Generated response
+```
+
+### No per-request API cost
+
+Once the model has been downloaded, test-case and Selenium generation can run without consuming paid API credits for each request. This is useful during development because prompt changes, debugging, and repeated test generation can otherwise create recurring inference costs.
+
+### Better control over the inference environment
+
+Running the model locally provides direct control over:
+
+- the model being used,
+- generation parameters such as temperature and token limits,
+- model availability,
+- when the model is upgraded or replaced,
+- how the application communicates with the inference layer.
+
+The application communicates with Ollama through its local HTTP API, keeping the LLM layer separate from the Streamlit interface and RAG logic.
+
+### Suitable for code-oriented generation
+
+`Qwen2.5-Coder 7B Instruct` was selected because the project requires the model to handle both:
+
+- structured QA test-case generation, and
+- Python/Selenium code generation.
+
+Using a code-oriented instruction model provides a practical balance between local hardware requirements and the type of output the application needs.
+
+### Trade-offs
+
+Local inference is not automatically better than a hosted model.
+
+On consumer hardware, a 7B model can be:
+
+- slower than cloud-hosted inference,
+- less reliable on complex reasoning,
+- more likely to hallucinate unsupported behavior or selectors,
+- limited by available RAM and GPU memory.
+
+Hosted models such as OpenAI or Gemini may provide stronger reasoning and faster inference on large cloud infrastructure. The purpose of using Ollama here is to demonstrate a **local, controllable inference architecture** while accepting the limitations of a smaller model.
+
+For this reason, generated test cases and automation scripts should still be reviewed before being treated as authoritative verification evidence.
 
 ---
 
@@ -301,12 +409,7 @@ Runtime-generated folders such as virtual environments, Python caches, generated
 
 ## UI Preview
 
-> **UI Screenshot Placeholder**  
-> Add a screenshot showing the Streamlit interface with generated test cases, the target application path, Selenium generation, and a test execution result.
-
-<!-- Example after adding your screenshot:
-![Application UI](docs/images/application-ui.png)
--->
+Link for Project Demo: https://drive.google.com/file/d/1v4GORwi0kskJRbNfgvserJLqUYIwqmlF/view?usp=sharing 
 
 ---
 
